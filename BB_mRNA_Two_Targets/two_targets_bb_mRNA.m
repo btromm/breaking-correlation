@@ -18,13 +18,13 @@ x.t_end = 10e5;
 x.sim_dt = .1;
 x.dt = 100;
 
-x.AB.NaV.add('IC_Two_Targets/IntegralController_target1', 'tau_m', 666);
-x.AB.CaT.add('IC_Two_Targets/IntegralController_target1', 'tau_m', 55555);
-x.AB.CaS.add('IC_Two_Targets/IntegralController_target2', 'tau_m', 45454);
-x.AB.ACurrent.add('IC_Two_Targets/IntegralController_target1', 'tau_m', 5000);
-x.AB.KCa.add('IC_Two_Targets/IntegralController_target2', 'tau_m', 1250);
-x.AB.Kd.add('IC_Two_Targets/IntegralController_target2', 'tau_m', 2000);
-x.AB.HCurrent.add('IC_Two_Targets/IntegralController_target2', 'tau_m', 125000);
+x.AB.NaV.add('BB_mRNA_Two_Targets/BangBangController_mRNA_target1', 'tau_g', 666);
+x.AB.CaT.add('BB_mRNA_Two_Targets/BangBangController_mRNA_target2', 'tau_g', 55555);
+x.AB.CaS.add('BB_mRNA_Two_Targets/BangBangController_mRNA_target2', 'tau_g', 45454);
+x.AB.ACurrent.add('BB_mRNA_Two_Targets/BangBangController_mRNA_target1', 'tau_g', 5000);
+x.AB.KCa.add('BB_mRNA_Two_Targets/BangBangController_mRNA_target2', 'tau_g', 1250);
+x.AB.Kd.add('BB_mRNA_Two_Targets/BangBangController_mRNA_target1', 'tau_g', 2000);
+x.AB.HCurrent.add('BB_mRNA_Two_Targets/BangBangController_mRNA_target1', 'tau_g', 125000);
 
 x.set('*tau_g',x.get('*tau_g')/10);
 

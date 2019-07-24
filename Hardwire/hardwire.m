@@ -1,30 +1,29 @@
-%% Breaking Correlation
-% Two different Ca targets
-% Integral Controller
+%% Mixing controllers
+% Breaking correlation
+
 
 clear;
 
 numSim = 250;
 cond = zeros(8, numSim);
 
-x = xolotl.examples.BurstingNeuron_multiple('prefix', 'liu');
+x = xolotl.examples.BurstingNeuron('prefix', 'liu');
 
 g0=1e-1+1e-1*rand(8,1);
 x.set('*gbar',g0);
 x.AB.Leak.gbar=3.1688*rand()+0.0159;
-x.AB.Ca_target_1=7;
-x.AB.Ca_target_2=7.25;
+x.AB.Ca_target=7;
 x.t_end = 10e5;
 x.sim_dt = .1;
 x.dt = 100;
 
-x.AB.NaV.add('IC_Two_Targets/IntegralController_target1', 'tau_m', 666);
-x.AB.CaT.add('IC_Two_Targets/IntegralController_target1', 'tau_m', 55555);
-x.AB.CaS.add('IC_Two_Targets/IntegralController_target2', 'tau_m', 45454);
-x.AB.ACurrent.add('IC_Two_Targets/IntegralController_target1', 'tau_m', 5000);
-x.AB.KCa.add('IC_Two_Targets/IntegralController_target2', 'tau_m', 1250);
-x.AB.Kd.add('IC_Two_Targets/IntegralController_target2', 'tau_m', 2000);
-x.AB.HCurrent.add('IC_Two_Targets/IntegralController_target2', 'tau_m', 125000);
+x.AB.NaV.add('oleary/IntegralController', 'tau_m', 666);
+x.AB.CaT.add('Hardwire/DoNothingController');
+x.AB.CaS.add('Hardwire/DoNothingController');
+x.AB.ACurrent.add('oleary/IntegralController', 'tau_m', 5000);
+x.AB.KCa.add('Hardwire/DoNothingController')
+x.AB.Kd.add('oleary/IntegralController', 'tau_m', 2000);
+x.AB.HCurrent.add('oleary/IntegralController', 'tau_m', 125000);
 
 x.set('*tau_g',x.get('*tau_g')/10);
 
