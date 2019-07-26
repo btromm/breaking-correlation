@@ -116,8 +116,8 @@ public:
     double Cm = 10; // specific capacitance
 
 
-    double Ca_target_1;
-    double Ca_target_2; // for homeostatic control
+    double Ca_target; // for homeostatic control
+    double ICa_target; //for homeostatic control
     double Ca_out = 3000;
 
 
@@ -142,7 +142,7 @@ public:
     int stochastic_channels = 0;
 
     // constructor with all parameters
-    compartment(double V_, double Ca_, double Cm_, double A_, double vol_,  double Ca_target_1_, double Ca_target_2_, double Ca_average_, double tree_idx_, double neuron_idx_, double radius_, double len_, double shell_thickness_, double Ca_out_)
+    compartment(double V_, double Ca_, double Cm_, double A_, double vol_, double ICa_target_,  double Ca_target_, double Ca_average_, double tree_idx_, double neuron_idx_, double radius_, double len_, double shell_thickness_, double Ca_out_)
     {
 
         // core dynamic variables
@@ -168,8 +168,8 @@ public:
 
 
         // calcium
-        Ca_target_1 = Ca_target_1_;
-        Ca_target_2 = Ca_target_2_;
+        ICa_target = ICa_target_;
+        Ca_target = Ca_target_;
         Ca_average = Ca_average_;
         Ca_average = 0; // reset it every time
 
@@ -717,7 +717,7 @@ void compartment::integrateChannels(void) {
             break;
 
         default:
-            // fall back onto simply integrating 
+            // fall back onto simply integrating
             // integrate all channels
             for (int i=0; i<n_cond; i++) {
                 cond[i]->integrate(V_prev, Ca_prev);
@@ -725,7 +725,7 @@ void compartment::integrateChannels(void) {
                 sigma_gE += (cond[i]->g)*(cond[i]->E);
             }
             break;
-        
+
     }
 
 

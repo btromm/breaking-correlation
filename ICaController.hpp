@@ -1,18 +1,16 @@
-// _  _ ____ _    ____ ___ _    
-//  \/  |  | |    |  |  |  |    
-// _/\_ |__| |___ |__|  |  |___ 
+// _  _ ____ _    ____ ___ _
+//  \/  |  | |    |  |  |  |
+// _/\_ |__| |___ |__|  |  |___
 //
-// Bang Bang controller, controls mRNA
-// This controller can control either a synapse
-// or a conductance 
+// Integral controller for <ICa>
 
-#ifndef BANGBANGCONTROLLER_MRNA
-#define BANGBANGCONTROLLER_MRNA
+#ifndef ICACONTROLLER
+#define ICACONTROLLER
 #include "mechanism.hpp"
 #include <limits>
 
 //inherit controller class spec
-class BangBangController_mRNA: public mechanism {
+class ICaController: public mechanism {
 
 protected:
     // flag used to switch between
@@ -25,29 +23,27 @@ protected:
 public:
     // timescales
     double tau_m = std::numeric_limits<double>::infinity();
-    double tau_g = 5e3; 
+    double tau_g = 5e3;
 
-    // mRNA concentration 
+    //mRNA concentration
     double m = 0;
 
     // area of the container this is in
     double container_A;
 
-    // specify parameters + initial conditions for 
-    // mechanism that controls a conductance 
-    BangBangController_mRNA(double tau_m_, double tau_g_, double m_)
+    // specify parameters + initial conditions for
+    // mechanism that controls a conductance
+    ICaController(double tau_m_, double tau_g_, double m_)
     {
 
         tau_m = tau_m_;
         tau_g = tau_g_;
         m = m_;
 
-
-        // if (tau_m<=0) {mexErrMsgTxt("[IntegralController] tau_m must be > 0. Perhaps you meant to set it to Inf?\n");}
-        if (tau_g<=0) {mexErrMsgTxt("[BangBangController_mRNA] tau_g must be > 0. Perhaps you meant to set it to Inf?\n");}
+        if (tau_g<=0) {mexErrMsgTxt("[ICaController] tau_g must be > 0. Perhaps you meant to set it to Inf?\n");}
     }
 
-    
+
     void integrate(void);
 
     void checkSolvers(int);
@@ -63,7 +59,7 @@ public:
 };
 
 
-double BangBangController_mRNA::getState(int idx)
+double ICaController::getState(int idx)
 {
     if (idx == 1) {return m;}
     else if (idx == 2) {return channel->gbar;}
@@ -72,10 +68,10 @@ double BangBangController_mRNA::getState(int idx)
 }
 
 
-int BangBangController_mRNA::getFullStateSize(){return 2; }
+int ICaController::getFullStateSize(){return 2; }
 
 
-int BangBangController_mRNA::getFullState(double *cont_state, int idx)
+int ICaController::getFullState(double *cont_state, int idx) //possibly needs to be modified?
 {
     // give it the current mRNA level
     cont_state[idx] = m;
@@ -86,18 +82,18 @@ int BangBangController_mRNA::getFullState(double *cont_state, int idx)
     // being controller
     if (channel)
     {
-      cont_state[idx] = channel->gbar;  
+      cont_state[idx] = channel->gbar;
     }
     else if (syn)
     {
-        cont_state[idx] = syn->gmax;  
+        cont_state[idx] = syn->gmax; //ignore
     }
     idx++;
     return idx;
 }
 
 
-void BangBangController_mRNA::connect(conductance * channel_)
+void ICaController::connect(conductance * channel_)
 {
 
     // connect to a channel
@@ -112,7 +108,7 @@ void BangBangController_mRNA::connect(conductance * channel_)
     controlling_class = (channel_->getClass()).c_str();
 
     // attempt to read the area of the container that this
-    // controller should be in. 
+    // controller should be in.
     container_A  = (channel->container)->A;
 
     control_type = 1;
@@ -120,12 +116,12 @@ void BangBangController_mRNA::connect(conductance * channel_)
 
 }
 
-void BangBangController_mRNA::connect(compartment* comp_)
+void ICaController::connect(compartment* comp_)
 {
-    mexErrMsgTxt("[BangBangController_mRNA] This mechanism cannot connect to a compartment object");
+    mexErrMsgTxt("[ICaController] This mechanism cannot connect to a compartment object");
 }
 
-void BangBangController_mRNA::connect(synapse* syn_)
+void ICaController::connect(synapse* syn_)
 {
 
     // connect to a synpase
@@ -137,7 +133,7 @@ void BangBangController_mRNA::connect(synapse* syn_)
 
 
     // attempt to read the area of the container that this
-    // controller should be in. 
+    // controller should be in.
     container_A  = (syn->post_syn)->A;
 
     control_type = 2;
@@ -145,14 +141,14 @@ void BangBangController_mRNA::connect(synapse* syn_)
 }
 
 
-void BangBangController_mRNA::integrate(void)
+void ICaController::integrate(void)
 {
 
 
     switch (control_type)
     {
         case 0:
-            mexErrMsgTxt("[BangBangController_mRNA] misconfigured controller. Make sure this object is contained by a conductance or synapse object");
+            mexErrMsgTxt("[ICaController] misconfigured controller. Make sure this object is contained by a conductance or synapse object");
             break;
 
 
@@ -160,16 +156,18 @@ void BangBangController_mRNA::integrate(void)
 
             {
             // if the target is NaN, we will interpret this
-            // as the controller being disabled 
-            // and do nothing 
-            if (isnan((channel->container)->Ca_target)) {return;}
+            // as the controller being disabled
+            // and do nothing
+            if (isnan((channel->container)->ICa_target)) {return;}
 
-            double Ca_error = (channel->container)->Ca_target - (channel->container)->Ca_prev;
+
+            double ICa_error = abs(((channel->container)->ICa_target) - (channel->container)->i_Ca_prev);
+            //mexPrintf("ICa_prev=%f\n",(channel->container)->i_Ca_prev);
+            //mexPrintf("ICa_error=%f\n",ICa_error);
 
             // integrate mRNA
-            if(Ca_error > 0) {m += dt/tau_m;}
-            else if(Ca_error < 0) {m -= dt/tau_m;}
-            
+            m += (dt/tau_m)*(ICa_error);
+
             // mRNA levels below zero don't make any sense
             if (m < 0) {m = 0;}
 
@@ -183,57 +181,54 @@ void BangBangController_mRNA::integrate(void)
                 channel->gbar_next += gdot/container_A;
             }
 
-
             break;
 
             }
-        case 2:
+        case 2: //ignore
             {
             // if the target is NaN, we will interpret this
-            // as the controller being disabled 
-            // and do nothing 
+            // as the controller being disabled
+            // and do nothing
+            if (isnan((channel->container)->ICa_target)) {return;}
 
-            if (isnan((syn->post_syn)->Ca_target)) {return;}
 
-            double Ca_error = (syn->post_syn)->Ca_target - (syn->post_syn)->Ca_prev;
+            double ICa_error = (channel->container)->ICa_target - (channel->container)->i_Ca_prev;
 
             // integrate mRNA
-            m += (dt/tau_m)*(Ca_error);
+            m += (dt/tau_m)*(ICa_error);
 
             // mRNA levels below zero don't make any sense
             if (m < 0) {m = 0;}
 
-            // copy the protein levels from this syn
-            double gdot = ((dt/tau_g)*(m - syn->gmax*1e-3));
+            // copy the protein levels from this channel
+            double gdot = ((dt/tau_g)*(m - channel->gbar*container_A));
 
             // make sure it doesn't go below zero
-            if (syn->gmax + gdot*1e3 < 0) {
-                syn->gmax = 0;
+            if (channel->gbar_next + gdot < 0) {
+                channel->gbar_next = 0;
             } else {
-                syn->gmax += gdot*1e3;
+                channel->gbar_next += gdot/container_A;
             }
-
 
             break;
 
             }
+          default:
+              mexErrMsgTxt("[ICaController] misconfigured controller");
+              break;
 
-        default:
-            mexErrMsgTxt("[BangBangController_mRNA] misconfigured controller");
-            break;
-
-    }
+      }
 
 
 }
 
 
 
-void BangBangController_mRNA::checkSolvers(int k) {
+void ICaController::checkSolvers(int k) {
     if (k == 0){
         return;
     } else {
-        mexErrMsgTxt("[BangBangController_mRNA] unsupported solver order\n");
+        mexErrMsgTxt("[ICaController] unsupported solver order\n");
     }
 }
 
