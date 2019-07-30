@@ -2,7 +2,7 @@
 //  \/  |  | |    |  |  |  |
 // _/\_ |__| |___ |__|  |  |___
 //
-// Integral controller using ICa as a sensor
+// Integral controller for <ICa>
 
 #ifndef ICACONTROLLER
 #define ICACONTROLLER
@@ -24,11 +24,6 @@ public:
     // timescales
     double tau_m = std::numeric_limits<double>::infinity();
     double tau_g = 5e3;
-    double tau_ICa = 0;
-
-    double iCa_target = std::numeric_limits<double>::quiet_NaN();
-
-    double smooth_ICa = 0;
 
     //mRNA concentration
     double m = 0;
@@ -38,17 +33,12 @@ public:
 
     // specify parameters + initial conditions for
     // mechanism that controls a conductance
-    ICaController(double tau_m_, double tau_g_, double m_, double tau_ICa_, double iCa_target_, double smooth_ICa_)
+    ICaController(double tau_m_, double tau_g_, double m_)
     {
 
         tau_m = tau_m_;
         tau_g = tau_g_;
-        tau_ICa = tau_ICa_;
-
         m = m_;
-
-        iCa_target = iCa_target_;
-        smooth_ICa = smooth_ICa_;
 
         if (tau_g<=0) {mexErrMsgTxt("[ICaController] tau_g must be > 0. Perhaps you meant to set it to Inf?\n");}
     }
@@ -81,7 +71,7 @@ double ICaController::getState(int idx)
 int ICaController::getFullStateSize(){return 2; }
 
 
-int ICaController::getFullState(double *cont_state, int idx)
+int ICaController::getFullState(double *cont_state, int idx) //possibly needs to be modified?
 {
     // give it the current mRNA level
     cont_state[idx] = m;
@@ -168,11 +158,12 @@ void ICaController::integrate(void)
             // if the target is NaN, we will interpret this
             // as the controller being disabled
             // and do nothing
-            if (isnan(iCa_target)) {return;}
+            if (isnan((channel->container)->ICa_target)) {return;}
 
-            smooth_ICa += (dt/tau_ICa)*((channel->container)->i_Ca_prev - smooth_ICa); //integrate smooth_ICa using filtering
 
-            double ICa_error = -(iCa_target - smooth_ICa); //calculate error
+            double ICa_error = abs(((channel->container)->ICa_target) - (channel->container)->i_Ca_prev);
+            //mexPrintf("ICa_prev=%f\n",(channel->container)->i_Ca_prev);
+            //mexPrintf("ICa_error=%f\n",ICa_error);
 
             // integrate mRNA
             m += (dt/tau_m)*(ICa_error);
@@ -193,34 +184,34 @@ void ICaController::integrate(void)
             break;
 
             }
-        case 2:
+        case 2: //ignore
             {
-              // if the target is NaN, we will interpret this
-              // as the controller being disabled
-              // and do nothing
-              if (isnan(iCa_target)) {return;}
+            // if the target is NaN, we will interpret this
+            // as the controller being disabled
+            // and do nothing
+            if (isnan((channel->container)->ICa_target)) {return;}
 
-              smooth_ICa += (dt/tau_ICa)*((channel->container)->i_Ca_prev - smooth_ICa);
 
-              double ICa_error = (iCa_target - smooth_ICa);
+            double ICa_error = (channel->container)->ICa_target - (channel->container)->i_Ca_prev;
 
-              // integrate mRNA
-              m += (dt/tau_m)*(ICa_error);
+            // integrate mRNA
+            m += (dt/tau_m)*(ICa_error);
 
-              // mRNA levels below zero don't make any sense
-              if (m < 0) {m = 0;}
+            // mRNA levels below zero don't make any sense
+            if (m < 0) {m = 0;}
 
-              // copy the protein levels from this channel
-              double gdot = ((dt/tau_g)*(m - channel->gbar*container_A));
+            // copy the protein levels from this channel
+            double gdot = ((dt/tau_g)*(m - channel->gbar*container_A));
 
-              // make sure it doesn't go below zero
-              if (channel->gbar_next + gdot < 0) {
-                  channel->gbar_next = 0;
-              } else {
-                  channel->gbar_next += gdot/container_A;
-              }
+            // make sure it doesn't go below zero
+            if (channel->gbar_next + gdot < 0) {
+                channel->gbar_next = 0;
+            } else {
+                channel->gbar_next += gdot/container_A;
+            }
 
-              break;
+            break;
+
             }
           default:
               mexErrMsgTxt("[ICaController] misconfigured controller");

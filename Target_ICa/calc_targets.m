@@ -6,7 +6,7 @@ clear all;
 
 x = xolotl.examples.BurstingNeuron('prefix','prinz');
 
-
+%{
 x.AB.NaV.add('oleary/IntegralController');
 x.AB.CaT.add('oleary/IntegralController');
 x.AB.CaS.add('oleary/IntegralController');
@@ -14,9 +14,9 @@ x.AB.ACurrent.add('oleary/IntegralController');
 x.AB.KCa.add('oleary/IntegralController');
 x.AB.Kd.add('oleary/IntegralController');
 x.AB.HCurrent.add('oleary/IntegralController');
-%}
 
 %x.set('*tau_m',5000./ x.get('*gbar'));
+%}
 
 x.AB.add('Leak','E',-55);
 %g0=1e-1+1e-1*rand(8,1);
@@ -25,9 +25,9 @@ x.AB.Leak.gbar=0;
 %x.AB.Ca_target=115.5;
 
 
-x.t_end = 5e5;
-x.sim_dt = 0.1;
-x.dt = 0.1;
+x.t_end = 5e3;
+x.sim_dt = 0.1; %ms
+x.dt = 0.1; %ms
 x.integrate;
 [V,Ca,C,I] = x.integrate;
 
