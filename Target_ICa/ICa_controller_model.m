@@ -10,6 +10,7 @@ using O'Leary et al. 2014's IntegralController mechanism.
 
 %% Set Parameters for pure ICa Controller
 
+close all;
 clear all;
 
 x=xolotl.examples.BurstingNeuron('prefix','prinz'); %initialize Prinz model
@@ -17,7 +18,7 @@ x=xolotl.examples.BurstingNeuron('prefix','prinz'); %initialize Prinz model
 
 % Load in I_Ca controllers
 
-x.AB.NaV.add('breaking-correlation/Target_ICa/ICaController');
+x.AB.NaV.add('oleary/IntegralController');
 x.AB.CaT.add('breaking-correlation/Target_ICa/ICaController');
 x.AB.CaS.add('breaking-correlation/Target_ICa/ICaController');
 x.AB.ACurrent.add('breaking-correlation/Target_ICa/ICaController');
@@ -95,7 +96,7 @@ figlib.pretty('PlotLineWidth',1.5,'LineWidth',1.5)
 x.t_end = 1e6;
 x.sim_dt = .1;
 x.dt = 100;
-numSim = 25;
+numSim = 250;
 
 % Integrate the model *numSim* number of times
 for i=1:numSim
@@ -105,9 +106,10 @@ for i=1:numSim
     g0 = 1e-1+1e-1*rand(7,1);
     x.set('*Controller.m',g0);
     x.AB.Leak.gbar=(1e-4/x.AB.A)+((1.99e-2/x.AB.A)*rand());
-    x.integrate;
 
+    x.integrate;
     cond(:,i) = x.get('AB*gbar');
+
     corelib.textbar(i,numSim);
 end
 
