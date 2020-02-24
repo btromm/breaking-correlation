@@ -5,9 +5,7 @@
 This experiment seeks to explore methods for breaking correlations between some, or all, maximal
 conductances found in the bursting neuron. Presently, the use of one (1) integral controller, as per
 O'Leary et al. 2014, results in the expression of positive correlations between all maximal conductances.
-This, however, is not biophysically realistic. Though Liu et al. 1999 was more biophysically realistic,
-the model is slow and the choice of control is not necessarily realistic, though biological
-experiments have yet to confirm this.
+This, however, is not biophysically realistic.
 
 ## Breakdown
 
